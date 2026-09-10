@@ -44,5 +44,42 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 */
 /** @var object $router **/
 
-$router->get('/', 'Welcome::index');
+$router->get('/', 'AuthController::loginForm');
+$router->get('/login', 'AuthController::loginForm');
+$router->post('/login', 'AuthController::login');
+$router->get('/logout', 'AuthController::logout');
+
+$router->group(['middleware' => 'auth'], function ($router) {
+    $router->get('/products', 'ProductController::index');
+    $router->get('/products/create', 'ProductController::createForm');
+    $router->post('/products', 'ProductController::store');
+    $router->get('/products/edit/{id}', 'ProductController::editForm')->where_number('id');
+    $router->post('/products/edit/{id}', 'ProductController::update')->where_number('id');
+    $router->post('/products/delete/{id}', 'ProductController::destroy')->where_number('id');
+});
+
+$router->get('/db-check', function () {
+    try {
+        $db = lava_instance()->call->database();
+        $stmt = $db->raw('SHOW TABLES');
+        $tables = $stmt ? $stmt->fetchAll(PDO::FETCH_COLUMN) : [];
+        echo json_encode([
+            'status' => 'ok',
+            'driver' => getenv('DB_DRIVER') ?: 'mysql',
+            'host' => getenv('DB_HOST') ?: 'unknown',
+            'database' => getenv('DB_NAME') ?: 'unknown',
+            'tables' => $tables,
+        ], JSON_PRETTY_PRINT);
+    } catch (Throwable $e) {
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'trace' => explode("\n", $e->getTraceAsString()),
+        ], JSON_PRETTY_PRINT);
+    }
+    exit;
+});
+
 $router->get('/users', 'UsersController::index');
+$router->get('/users/{id}', 'UsersController::show');

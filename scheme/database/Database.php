@@ -244,7 +244,10 @@ class Database {
 
         switch ($driver) {
             case 'mysql':
-                $dsn = "mysql:host=$host;dbname=$dbname_value;charset=$charset;port=$port";
+                $dsn = "mysql:host={$host};dbname={$dbname_value};charset={$charset}";
+                if (!empty($port)) {
+                    $dsn .= ";port={$port}";
+                }
                 break;
             case 'pgsql':
                 $dsn = "pgsql:host=$host;port=$port;dbname=$dbname_value;user=$username;password=$password";
@@ -267,6 +270,35 @@ class Database {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
         );
+
+        if ($driver === 'mysql') {
+            $ssl_mode = getenv('DB_SSLMODE') ?: (isset($database_config['sslmode']) ? strtoupper((string) $database_config['sslmode']) : 'REQUIRED');
+            $ssl_ca = getenv('DB_SSL_CA') ?: (isset($database_config['sslca']) ? $database_config['sslca'] : '');
+            $ssl_cert = getenv('DB_SSL_CERT') ?: (isset($database_config['sslcert']) ? $database_config['sslcert'] : '');
+            $ssl_key = getenv('DB_SSL_KEY') ?: (isset($database_config['sslkey']) ? $database_config['sslkey'] : '');
+
+            if (in_array($ssl_mode, ['REQUIRED', 'PREFERRED', 'VERIFY_CA', 'VERIFY_IDENTITY', 'TRUE', 'YES'], true)) {
+                if (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
+                    $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = in_array($ssl_mode, ['VERIFY_CA', 'VERIFY_IDENTITY'], true) ? true : false;
+                }
+
+                if (!empty($ssl_ca) && file_exists($ssl_ca) && defined('PDO::MYSQL_ATTR_SSL_CA')) {
+                    $options[PDO::MYSQL_ATTR_SSL_CA] = $ssl_ca;
+                }
+
+                if (!empty($ssl_cert) && file_exists($ssl_cert) && defined('PDO::MYSQL_ATTR_SSL_CERT')) {
+                    $options[PDO::MYSQL_ATTR_SSL_CERT] = $ssl_cert;
+                }
+
+                if (!empty($ssl_key) && file_exists($ssl_key) && defined('PDO::MYSQL_ATTR_SSL_KEY')) {
+                    $options[PDO::MYSQL_ATTR_SSL_KEY] = $ssl_key;
+                }
+            }
+
+            if (defined('PDO::MYSQL_ATTR_INIT_COMMAND')) {
+                $options[PDO::MYSQL_ATTR_INIT_COMMAND] = 'SET NAMES utf8mb4';
+            }
+        }
 
         try {
             $this->db = new PDO($dsn, $username, $password, $options);

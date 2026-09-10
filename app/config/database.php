@@ -66,6 +66,8 @@ $database['main'] = array(
     'database'	=> getenv('DB_NAME') ?: 'mydb',
     'charset'	=> getenv('DB_CHARSET') ?: 'utf8mb4',
     'dbprefix'	=> getenv('DB_PREFIX') ?: '',
+    'sslmode'	=> getenv('DB_SSLMODE') ?: 'REQUIRED',
+    'sslca'     => getenv('DB_SSL_CA') ?: '',
     // Optional for SQLite
     'path'      => ''
 );

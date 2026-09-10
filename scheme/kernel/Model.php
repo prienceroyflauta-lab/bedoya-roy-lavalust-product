@@ -633,7 +633,8 @@ class Model {
     public function _order_by($column, $order = 'ASC', $with_deleted = false) {
         $this->db->table($this->table);
         $this->apply_soft_delete($with_deleted);
-        return $this->db->order_by($column, $order)->get_all();
+        $this->db->order_by($column, $order);
+        return $this->db;
     }
 
     /**
@@ -645,7 +646,8 @@ class Model {
     public function _limit($number, $with_deleted = false) {
         $this->db->table($this->table);
         $this->apply_soft_delete($with_deleted);
-        return $this->db->limit($number)->get_all();
+        $this->db->limit($number);
+        return $this->db;
     }
     
     /**
@@ -802,7 +804,7 @@ class Model {
         $this->db->table($this->table);
         $this->apply_soft_delete($with_deleted);
         $this->db->where($conditions);
-        return $this;
+        return $this->db;
     }
 
     /**
@@ -815,7 +817,7 @@ class Model {
     {
         $this->db->table($this->table);
         $this->db->group_by($column);
-        return $this;
+        return $this->db;
     }
 
     /**
@@ -830,7 +832,7 @@ class Model {
     {
         $this->db->table($this->table);
         $this->db->having($column, $operator, $value);
-        return $this;
+        return $this->db;
     }
 
     /**
