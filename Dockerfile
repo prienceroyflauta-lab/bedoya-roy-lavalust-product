@@ -15,6 +15,10 @@ RUN apt-get update && apt-get install -y \
 
 COPY . /var/www/html
 
+RUN mkdir -p /var/www/html/runtime/session /var/www/html/runtime/logs /var/www/html/runtime/cache \
+    && chown -R www-data:www-data /var/www/html/runtime \
+    && chmod -R 775 /var/www/html/runtime
+
 RUN cat <<'EOF' > /etc/apache2/sites-available/000-default.conf
 <VirtualHost *:80>
     ServerAdmin webmaster@localhost
